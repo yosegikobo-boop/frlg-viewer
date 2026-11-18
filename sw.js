@@ -2,7 +2,7 @@
 //  (1) 全部の返事に COOP・COEP のヘッダーを足す（GitHub Pages はヘッダーを変えられない。mGBA はスレッドを使うので要る）
 //  (2) アプリのファイルを覚えて、オフラインで動かす
 // VERSION と FILES は tools/build_mobile.py が書き入れる。
-const VERSION = "33f34ae74002";
+const VERSION = "69536e083ff0";
 const FILES = [
   "frlg/__init__.py",
   "frlg/addresses.py",
@@ -24,6 +24,7 @@ const FILES = [
   "js/pad.js",
   "js/py.js",
   "js/savetab.js",
+  "js/speed.js",
   "js/ui.js",
   "manifest.webmanifest",
   "py/webapp.py",

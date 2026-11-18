@@ -1,6 +1,6 @@
 // 画面のコントローラーとキーボード
 //
-// [data-key="a"] などのボタン、[data-dpad] の十字キー、[data-fast] の早送り（押しているあいだだけ）。
+// [data-key="a"] などのボタン、[data-dpad] の十字キー。早送り（[data-fast]・Tab）は speed.js が ON・OFF する。
 
 const KEYMAP = {
   ArrowUp: "up", ArrowDown: "down", ArrowLeft: "left", ArrowRight: "right",
@@ -21,7 +21,7 @@ export function dpadDirs(dx, dy, radius) {
   return out;
 }
 
-export function createPad(root, emu) {
+export function createPad(root, emu, speed = null) {
   const buzz = () => { if (navigator.vibrate) navigator.vibrate(10); };
   const down = (el, fn) => {
     el.addEventListener("pointerdown", (e) => {
@@ -42,7 +42,6 @@ export function createPad(root, emu) {
     const key = el.dataset.key;
     down(el, (on) => (on ? emu.press(key) : emu.release(key)));
   }
-  for (const el of root.querySelectorAll("[data-fast]")) down(el, (on) => emu.setFast(on));
 
   // 十字キー: 指をすべらせても向きが変わる
   for (const el of root.querySelectorAll("[data-dpad]")) {
@@ -78,7 +77,7 @@ export function createPad(root, emu) {
   const typing = (e) => /^(INPUT|SELECT|TEXTAREA)$/.test((e.target && e.target.tagName) || "");
   window.addEventListener("keydown", (e) => {
     if (typing(e)) return;
-    if (e.key === "Tab") { e.preventDefault(); if (!e.repeat) emu.setFast(true); return; }
+    if (e.key === "Tab") { e.preventDefault(); if (!e.repeat && speed) speed.toggle(); return; }
     const k = KEYMAP[e.key];
     if (!k) return;
     e.preventDefault();
@@ -86,7 +85,7 @@ export function createPad(root, emu) {
     if (!e.repeat) emu.press(k);
   });
   window.addEventListener("keyup", (e) => {
-    if (e.key === "Tab") { emu.setFast(false); return; }
+    if (e.key === "Tab") return;
     const k = KEYMAP[e.key];
     if (k) emu.release(k);
   });

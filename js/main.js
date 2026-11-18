@@ -1,6 +1,7 @@
 // ページのまとめ役: mGBA を用意して、最初の画面（ROM を選ぶ・はじめる）を動かす
 import { createEmu, romInfo } from "./emu.js";
 import { createPad } from "./pad.js";
+import { createSpeed } from "./speed.js";
 import { startBridge } from "./bridge.js";
 import { createUi } from "./ui.js";
 import { loadPy } from "./py.js";
@@ -42,10 +43,13 @@ export function checkRomFile(bytes) {
 
 export async function createApp(opts = {}) {
   const emu = await createEmu($("screen"), opts);
-  createPad(document, emu);
+  const speed = createSpeed(emu);
+  createPad(document, emu, speed);
 
   const app = {
     emu,
+    /** 早送り（ON・OFF と速さ） */
+    speed,
     ui: null,
     bridge: null,
     py: null,

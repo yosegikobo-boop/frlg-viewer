@@ -108,6 +108,9 @@ function fill(el, list, emptyText, enemy) {
  * @param opts.onOpen() パネルを開いた
  * @param opts.onSettings(s) 設定を変えた
  */
+/** 横持ちの見た目にする条件（index.html の @media と同じ） */
+export const LANDSCAPE = "(orientation: landscape) and (max-height: 520px)";
+
 export function createUi(opts = {}) {
   let open = false, boxTouched = false;
   const panel = $("panel"), btn = $("menuBtn");
@@ -160,6 +163,16 @@ export function createUi(opts = {}) {
     },
   };
   btn.onclick = () => ui.toggle();
+  $("panelClose").onclick = () => ui.close();
+  // 横持ちでは、メニューのボタンを下の列（SELECT・START・早送り）に入れる。右上だと R ボタンに重なる
+  const wide = window.matchMedia(LANDSCAPE);
+  const place = () => {
+    const home = document.querySelector(".topbar"), mid = document.querySelector(".mid");
+    if (wide.matches) { if (mid && btn.parentElement !== mid) mid.appendChild(btn); }
+    else if (home && btn.parentElement !== home) home.appendChild(btn);
+  };
+  place();
+  if (wide.addEventListener) wide.addEventListener("change", place); else wide.addListener(place);
   btn.hidden = false;
   return ui;
 }

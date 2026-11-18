@@ -182,6 +182,8 @@ export async function createEmu(canvas, opts = {}) {
     press(key) { if (running && KEYS.includes(key)) Module.buttonPress(key); },
     release(key) { if (running && KEYS.includes(key)) Module.buttonUnpress(key); },
     setFast(on, times = 4) { if (running) Module.setFastForwardMultiplier(on ? times : 1); },
+    /** 速さ（1.0〜4.0倍）。1秒に動かすコマ数を 60×倍率 にする（ゲームが動き出す前は mGBA が落ちるので何もしない） */
+    setSpeed(rate) { if (running && emu.frames > 0) Module.setCoreSettings({ baseFpsTarget: Math.round(60 * rate) }); },
     pause() { if (running) { Module.pauseGame(); Module.pauseAudio(); } },
     resume() { if (running) { Module.resumeGame(); Module.resumeAudio(); } },
     /** 音は、画面を触ったあとでないと鳴らない（ブラウザの決まり） */
