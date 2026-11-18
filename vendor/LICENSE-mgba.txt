@@ -1,0 +1,7 @@
+mGBA (WebAssembly build)
+
+Files: mgba.js, mgba.wasm (unmodified)
+Package: @thenick775/mgba-wasm 2.6.0
+Source: https://github.com/thenick775/mgba/tree/feature/wasm (fork of https://github.com/mgba-emu/mgba)
+License: Mozilla Public License 2.0 - https://mozilla.org/MPL/2.0/
+Copyright (c) 2013-2025 Jeffrey Pfau and contributors; wasm port by Nicholas VanCise

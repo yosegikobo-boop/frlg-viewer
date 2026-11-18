@@ -1,0 +1,7 @@
+Pyodide
+
+Files: pyodide/ (unmodified)
+Package: pyodide 314.0.8
+Source: https://github.com/pyodide/pyodide
+License: Mozilla Public License 2.0 - https://mozilla.org/MPL/2.0/
+Includes CPython (PSF License) and other components under their own licenses; see the source repository.

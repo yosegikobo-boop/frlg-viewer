@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#231a2b">
+<title>FRLGビューア</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+:root {
+  --bg1: #231a2b; --bg2: #1d1830; --bg3: #17202c;
+  --card: rgba(44, 33, 54, .92); --card-line: #4b3456;
+  --ink: #f6e9f7; --ink-soft: #cdb8d3; --ink-faint: #9d88a6; --track: #3a2c45;
+  --pink: #ff7eb6; --pink-deep: #f0559c; --lav: #b79bff; --mint: #7fdcc4; --sky: #8ccaff;
+  --gold: #f4b400; --up: #f0559c; --down: #5b8def;
+  --btn: #3a2c45; --btn-on: #6a4d7c;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; overflow: hidden; overscroll-behavior: none; }
+body { font-family: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Meiryo", sans-serif; color: var(--ink);
+  background: linear-gradient(160deg, var(--bg1), var(--bg2) 50%, var(--bg3)); background-color: var(--bg1);
+  display: flex; flex-direction: column; height: 100dvh; user-select: none; -webkit-user-select: none;
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+button { font: inherit; color: inherit; }
+[hidden] { display: none !important; }
+
+.bar { display: flex; align-items: center; gap: 8px; padding: 6px 10px; flex: none; }
+.bar h1 { font-size: 15px; margin: 0; font-weight: 800; color: var(--ink-soft); }
+.bar .sp { flex: 1; }
+.pill { border: 1px solid var(--card-line); background: var(--card); border-radius: 999px; padding: 6px 14px; font-weight: 800; font-size: 14px; }
+
+.stage { flex: none; display: flex; justify-content: center; background: #000; }
+#screen { display: block; width: min(100vw, calc((100dvh - 300px) * 1.5)); aspect-ratio: 3 / 2; height: auto;
+  image-rendering: pixelated; image-rendering: crisp-edges; background: #000; }
+#notice { flex: none; margin: 6px 10px 0; padding: 6px 10px; border-radius: 12px; background: var(--card);
+  border: 1px solid var(--card-line); font-size: 12px; color: var(--ink-soft); }
+
+/* コントローラー */
+.pad { flex: 1; min-height: 0; position: relative; touch-action: none; display: grid;
+  grid-template-columns: 1fr 1fr; grid-template-rows: auto 1fr auto; gap: 6px; padding: 8px 14px 12px;
+  grid-template-areas: "l r" "dpad ab" "mid mid"; }
+.pad button { touch-action: none; border: 1px solid var(--card-line); background: var(--btn); font-weight: 800; }
+.pad button.on { background: var(--btn-on); transform: scale(.96); }
+.sh { height: 40px; border-radius: 14px; font-size: 15px; }
+.sh.l { grid-area: l; justify-self: start; width: 44%; }
+.sh.r { grid-area: r; justify-self: end; width: 44%; }
+.dpad { grid-area: dpad; align-self: center; justify-self: start; width: min(42vw, 180px); aspect-ratio: 1; position: relative;
+  border-radius: 50%; background: radial-gradient(circle, #2c2136 0 28%, transparent 29%), var(--btn); border: 1px solid var(--card-line); touch-action: none; }
+.dpad i { position: absolute; width: 0; height: 0; border: 11px solid transparent; opacity: .55; }
+.dpad .u { top: 9%; left: 50%; margin-left: -11px; border-bottom-color: var(--ink); border-top-width: 0; }
+.dpad .d { bottom: 9%; left: 50%; margin-left: -11px; border-top-color: var(--ink); border-bottom-width: 0; }
+.dpad .l { left: 9%; top: 50%; margin-top: -11px; border-right-color: var(--ink); border-left-width: 0; }
+.dpad .r { right: 9%; top: 50%; margin-top: -11px; border-left-color: var(--ink); border-right-width: 0; }
+.dpad.on-up .u, .dpad.on-down .d, .dpad.on-left .l, .dpad.on-right .r { opacity: 1; filter: drop-shadow(0 0 6px var(--pink)); }
+.ab { grid-area: ab; align-self: center; justify-self: end; width: min(42vw, 180px); aspect-ratio: 1; position: relative; }
+.ab button { position: absolute; width: 46%; aspect-ratio: 1; border-radius: 50%; font-size: 22px; }
+.ab .a { right: 0; top: 8%; background: linear-gradient(135deg, var(--pink), var(--pink-deep)); border: none; color: #fff; }
+.ab .b { left: 0; bottom: 8%; background: linear-gradient(135deg, var(--lav), #8a6be0); border: none; color: #fff; }
+.ab button.on { filter: brightness(1.25); }
+.mid { grid-area: mid; display: flex; justify-content: center; gap: 10px; }
+.mid button { border-radius: 999px; padding: 8px 14px; font-size: 12px; color: var(--ink-soft); }
+
+/* メニューのパネル（コントローラーの上に重ねる。ゲームは見えたまま動く） */
+.lower { flex: 1; min-height: 0; position: relative; display: flex; flex-direction: column; }
+#panel { position: absolute; inset: 0; z-index: 10; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  background: var(--bg2); border-top: 1px solid var(--card-line); padding: 8px 12px 24px; user-select: text; -webkit-user-select: text; }
+.tabs { display: flex; gap: 6px; position: sticky; top: -8px; background: var(--bg2); padding: 6px 0 8px; z-index: 1; }
+.tabs button { flex: 1; border: 1px solid var(--card-line); background: var(--card); border-radius: 999px; padding: 8px 0; font-weight: 800; font-size: 14px; color: var(--ink-soft); }
+.tabs button.on { background: linear-gradient(90deg, var(--pink), var(--lav)); color: #fff; border-color: transparent; }
+.sec-title { display: flex; align-items: center; gap: 10px; margin: 12px 0 8px; font-weight: 800; font-size: 15px; }
+.sec-title select { width: auto; }
+.cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.card { background: var(--card); border: 1px solid var(--card-line); border-radius: 18px; padding: 10px 12px; }
+.card.enemy { border: 2px solid var(--pink); }
+.top { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.nm { font-size: 16px; font-weight: 800; }
+.spn { font-size: 12px; color: var(--ink-faint); }
+.lv { margin-left: auto; font-weight: 800; color: var(--ink-soft); }
+.shiny { color: var(--gold); font-weight: 800; }
+.sex { font-weight: 800; font-size: 15px; }
+.sex.m { color: #6aa8ff; } .sex.f { color: #ff7a9c; }
+.meta { font-size: 12px; color: var(--ink-soft); margin: 4px 0 6px; line-height: 1.5; }
+.bars { display: grid; gap: 3px; }
+.bar { display: grid; grid-template-columns: 5.2em 2.6em 1fr 2.2em 2.6em; align-items: center; gap: 6px; font-size: 12px; }
+.bar.head { font-size: 10px; color: var(--ink-faint); font-weight: 700; }
+.bar.head span { text-align: right; white-space: nowrap; } .bar.head .h-iv { text-align: center; }
+.st { font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; }
+.hp { display: grid; grid-template-columns: 2em 1fr auto; align-items: center; gap: 8px; margin: 2px 0 6px; font-size: 12px; font-weight: 800; }
+.hp .track { height: 10px; }
+.hp .fill { background: #5fd38a; } .hp .fill.mid { background: #f5c242; } .hp .fill.low { background: #ef6b6b; }
+.hp .num { font-variant-numeric: tabular-nums; }
+.cond { display: inline-block; margin-left: 6px; padding: 0 8px; border-radius: 99px; font-size: 11px; font-weight: 800; color: #fff; background: #a77bd6; }
+.bar .k { font-weight: 700; color: var(--ink-soft); white-space: nowrap; }
+.bar .k .u { color: var(--up); } .bar .k .d { color: var(--down); }
+.track { height: 8px; border-radius: 99px; background: var(--track); overflow: hidden; display: block; }
+.fill { display: block; height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--sky), var(--lav)); }
+.fill.max { background: linear-gradient(90deg, #ffd76a, var(--gold)); }
+.v { font-weight: 800; text-align: right; font-variant-numeric: tabular-nums; }
+.v.max { color: var(--gold); }
+.ev { color: var(--ink-faint); text-align: right; font-variant-numeric: tabular-nums; }
+.empty, .note { color: var(--ink-faint); font-size: 13px; line-height: 1.6; }
+#pyStatus { margin: 4px 0; padding: 6px 10px; border-radius: 12px; background: var(--card); font-size: 13px; color: var(--ink-soft); }
+#logs { white-space: pre-line; font-size: 12px; color: var(--ink-faint); margin-top: 14px; }
+input[type=text], input[type=number], select { font: inherit; font-size: 15px; color: var(--ink); background: var(--bg1);
+  border: 1px solid var(--card-line); border-radius: 12px; padding: 8px 10px; width: 100%; min-width: 0; }
+
+.set { display: grid; gap: 10px; }
+label.f { display: grid; gap: 4px; font-size: 13px; font-weight: 700; color: var(--ink-soft); }
+.checks { display: flex; gap: 16px; flex-wrap: wrap; font-weight: 700; font-size: 15px; }
+.checks label { display: flex; align-items: center; gap: 6px; }
+.checks input { width: 20px; height: 20px; accent-color: var(--pink-deep); }
+.toggle { border: none; border-radius: 999px; padding: 8px 22px; font-weight: 800; font-size: 15px; background: var(--track); color: var(--ink-soft); }
+.toggle.on { background: linear-gradient(90deg, var(--pink), var(--lav)); color: #fff; }
+.exp { display: flex; align-items: center; gap: 12px; }
+.exp input[type=range] { flex: 1; accent-color: var(--pink-deep); height: 32px; }
+.exp .rate { font-size: 20px; font-weight: 800; min-width: 3.6em; text-align: right; font-variant-numeric: tabular-nums; }
+.exp .rate.up { color: var(--pink-deep); }
+
+/* 最初の画面 */
+#resume { position: fixed; inset: 0; z-index: 25; display: grid; place-items: center; padding: 20px; background: rgba(23, 18, 32, .92); }
+#resume .box { width: min(420px, 100%); display: grid; gap: 14px; text-align: center; }
+#resume h2 { margin: 0; font-size: 21px; } #resume p { margin: 0; color: var(--ink-soft); }
+button.pick { border: 1px solid var(--card-line); background: var(--card); border-radius: 999px; padding: 12px 22px; font-weight: 800; font-size: 15px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; }
+.sbtn { display: inline-block; border: 1px solid var(--card-line); background: var(--card); border-radius: 999px; padding: 9px 18px; font-weight: 800; font-size: 14px; }
+.slot { display: flex; align-items: center; gap: 10px; margin: 6px 0; font-weight: 700; }
+.slot span { flex: 1; }
+#start { position: fixed; inset: 0; z-index: 20; display: grid; place-items: center; padding: 20px;
+  background: linear-gradient(160deg, var(--bg1), var(--bg2) 50%, var(--bg3)); }
+#start .box { width: min(420px, 100%); display: grid; gap: 14px; text-align: center; }
+#start h2 { margin: 0; font-size: 24px; font-weight: 800; }
+#start p { margin: 0; color: var(--ink-soft); font-size: 14px; line-height: 1.7; }
+#games { display: grid; gap: 10px; }
+.big { border: none; border-radius: 999px; padding: 14px 22px; font-weight: 800; font-size: 17px; color: #fff;
+  background: linear-gradient(90deg, var(--pink), var(--lav)); }
+label.pick { display: inline-block; border: 1px solid var(--card-line); background: var(--card); border-radius: 999px;
+  padding: 12px 22px; font-weight: 800; font-size: 15px; }
+label.pick input { display: none; }
+#msg { min-height: 1.6em; color: var(--gold); font-size: 14px; }
+
+/* 横持ち: 左に十字キー、まん中にゲーム、右に A・B */
+@media (orientation: landscape) and (max-height: 520px) {
+  #panel { position: fixed; inset: 0; z-index: 30; }
+  .bar { position: fixed; top: 0; right: 0; z-index: 5; padding: 4px 8px; }
+  .bar h1 { display: none; }
+  .stage { position: fixed; inset: 0; align-items: center; background: transparent; pointer-events: none; }
+  #screen { width: auto; height: 100dvh; max-width: calc(100vw - 300px); }
+  .pad { position: fixed; inset: 0; grid-template-columns: 150px 1fr 150px; grid-template-rows: auto 1fr auto;
+    grid-template-areas: "l . r" "dpad . ab" "mid mid mid"; padding: 8px 10px; }
+  .sh { width: 100% !important; }
+  .dpad, .ab { width: 140px; }
+  .mid { justify-content: space-between; padding: 0 160px; }
+}
+</style>
+</head>
+<body>
+<div class="bar">
+  <h1>FRLGビューア</h1>
+  <span class="sp"></span>
+  <button class="pill" id="menuBtn" hidden>メニュー</button>
+</div>
+<div class="stage"><canvas id="screen" width="240" height="160"></canvas></div>
+<div id="notice" hidden></div>
+
+<div class="lower">
+<div class="pad">
+  <button class="sh l" data-key="l">L</button>
+  <button class="sh r" data-key="r">R</button>
+  <div class="dpad" data-dpad><i class="u"></i><i class="d"></i><i class="l"></i><i class="r"></i></div>
+  <div class="ab">
+    <button class="a" data-key="a">A</button>
+    <button class="b" data-key="b">B</button>
+  </div>
+  <div class="mid">
+    <button data-key="select">SELECT</button>
+    <button data-key="start">START</button>
+    <button data-fast>早送り ▶▶</button>
+  </div>
+</div>
+
+<div id="panel" hidden>
+  <div class="tabs">
+    <button data-tab="cards">カード</button>
+    <button data-tab="settings">設定</button>
+    <button data-tab="save">セーブ</button>
+  </div>
+  <div id="pyStatus" hidden></div>
+  <section class="tab" id="tab-cards">
+    <div id="enemyBox" hidden>
+      <div class="sec-title">たたかっている相手</div>
+      <div id="enemy" class="cards"></div>
+    </div>
+    <div class="sec-title">てもち</div>
+    <div id="party" class="cards"><div class="empty">読み込み中…</div></div>
+    <div id="boxBox" hidden>
+      <div class="sec-title">ボックス <select id="box"></select></div>
+      <div id="boxCards" class="cards"></div>
+    </div>
+  </section>
+  <section class="tab" id="tab-settings" hidden>
+    <div class="sec-title">出現を変える <button id="toggle" class="toggle">OFF</button></div>
+    <p class="note">ON のあいだ、ふつうの野生のポケモン（草むら・洞窟・なみのり・釣り・いわくだき・サファリ）を下の設定に差し替えます。伝説やトレーナーは変わりません。起動したときはいつも OFF です。</p>
+    <div class="set">
+      <label class="f">ポケモン（空なら元のまま）<input id="species" type="text" list="splist" placeholder="なまえか番号" autocomplete="off"></label>
+      <label class="f">レベル（空なら元のまま）<input id="level" type="number" inputmode="numeric" min="1" max="100" placeholder="1〜100"></label>
+      <label class="f">せいかく<select id="nature"><option value="">元のまま</option></select></label>
+      <label class="f">せいべつ<select id="gender"><option value="">元のまま</option><option value="male">♂ オス</option><option value="female">♀ メス</option></select></label>
+      <div class="checks"><label><input id="max_ivs" type="checkbox">個体値MAX</label><label><input id="shiny" type="checkbox">色違い</label></div>
+      <label class="f">最初のポケモン（研究所でもらうとき）<input id="starter" type="text" list="splist" placeholder="空なら元のまま" autocomplete="off"></label>
+    </div>
+    <datalist id="splist"></datalist>
+    <p class="note">最初のポケモンにも、個体値MAX・色違い・せいかく・せいべつが使われます。</p>
+    <div class="sec-title">経験値の倍率</div>
+    <div class="exp"><input id="exp_rate" type="range" min="1" max="5" step="0.5" value="1"><span id="exp_text" class="rate">1.0倍</span></div>
+    <p class="note">バトルでもらえる経験値が増えます（野生もトレーナーも）。次の経験値からすぐ効きます。</p>
+    <p id="exp_ng" class="note" hidden>このゲームでは経験値の倍率が使えません。</p>
+    <div class="sec-title">トレーナーと何度でも戦う</div>
+    <div class="checks"><label><input id="rematch" type="checkbox">ON にする</label></div>
+    <p class="note">別の場所から入ってくると、その場所で前に勝ったトレーナーが復活します。勝つたびに相手のポケモンが Lv+2 ずつ強くなり、技もそのレベルのものになり、進化もします。ジムリーダーも復活します（バッジや技マシンをもう一度もらうことがあります）。ライバル・ロケット団は復活しません。</p>
+  </section>
+  <section class="tab" id="tab-save" hidden></section>
+  <div id="logs"></div>
+</div>
+</div>
+
+<div id="resume" hidden>
+  <div class="box">
+    <h2>前に閉じたところから？</h2>
+    <p>アプリを閉じたときの場面が残っています。</p>
+    <button class="big" id="resumeYes">続きから</button>
+    <button class="pick" id="resumeNo">ゲームのレポートから</button>
+  </div>
+</div>
+
+<div id="start">
+  <div class="box">
+    <h2>FRLGビューア</h2>
+    <p id="intro">じゅんび中…</p>
+    <div id="games"></div>
+    <div><label class="pick"><span id="pickLabel">ROM を選ぶ</span><input type="file" id="pick" accept=".gba,application/octet-stream"></label></div>
+    <div id="msg"></div>
+  </div>
+</div>
+
+<script type="module">
+const q = new URLSearchParams(location.search);
+const local = ["127.0.0.1", "localhost"].includes(location.hostname);
+const intro = document.getElementById("intro");
+// 確かめのとき（127.0.0.1 で ?dev=）だけ、ページの様子を tools/check_mobile.py に送る
+const devlog = (t) => { if (local && q.get("dev")) fetch("/dev/log?" + encodeURIComponent(t)).catch(() => {}); };
+devlog("ページ " + (crossOriginIsolated ? "isolated" : "not isolated"));
+try {
+  // サービスワーカー: オフラインで動かす・ヘッダーを足す（sw.js）。PC で serve.py から開いたときは要らない
+  if ("serviceWorker" in navigator && (!local || !crossOriginIsolated)) {
+    intro.textContent = "じゅんび中…（最初だけ、15MB ほど読み込みます）";
+    await navigator.serviceWorker.register("./sw.js");
+    if (!crossOriginIsolated) {
+      // サービスワーカーが動き出したら、1回だけ読み直す（ヘッダーつきでページを受け取り直す）
+      if (sessionStorage.getItem("frlg.reloaded")) throw new Error("このブラウザでは動かせません（Chrome で開いてね）");
+      await navigator.serviceWorker.ready;
+      if (!navigator.serviceWorker.controller) {
+        await new Promise((r) => navigator.serviceWorker.addEventListener("controllerchange", r, { once: true }));
+      }
+      sessionStorage.setItem("frlg.reloaded", "1");
+      location.reload();
+      await new Promise(() => {});
+    }
+    sessionStorage.removeItem("frlg.reloaded");
+  }
+  if (!crossOriginIsolated) throw new Error("このブラウザの開き方では動かせません（もう一度開き直してみてね）");
+  const { createApp } = await import("./js/main.js");
+  if (local && q.get("dev")) {
+    const { runScenario } = await import("./js/dev.js");      // 確かめ用。公開するものには入れない
+    await runScenario(q.get("dev"), createApp);
+  } else {
+    await createApp();
+    intro.textContent = "自分の ROM を選ぶと、このスマホの中に覚えます。ネットには送りません。";
+  }
+} catch (e) {
+  intro.textContent = "動かせませんでした: " + (e.message || e);
+  devlog("DONE ng ページ: " + (e.message || e));
+}
+</script>
+</body>
+</html>
