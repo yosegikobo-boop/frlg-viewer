@@ -75,6 +75,11 @@ export function createPad(root, emu, speed = null) {
 
   // キーボード（PC で確かめるとき用）
   const typing = (e) => /^(INPUT|SELECT|TEXTAREA)$/.test((e.target && e.target.tagName) || "");
+  // mGBA（SDL）は window でキーを受け取り、Backspace などを preventDefault する。
+  // そのままだと設定の入力欄で字が消せないので、入力欄のキーは document で止めて window に届けない
+  for (const type of ["keydown", "keyup", "keypress"]) {
+    document.addEventListener(type, (e) => { if (typing(e)) e.stopPropagation(); });
+  }
   window.addEventListener("keydown", (e) => {
     if (typing(e)) return;
     if (e.key === "Tab") { e.preventDefault(); if (!e.repeat && speed) speed.toggle(); return; }
