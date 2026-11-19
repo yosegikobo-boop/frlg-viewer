@@ -142,19 +142,25 @@ label.pick { display: inline-block; border: 1px solid var(--card-line); backgrou
 label.pick input { display: none; }
 #msg { min-height: 1.6em; color: var(--gold); font-size: 14px; }
 
-/* 横持ち: 左に十字キー、まん中にゲーム、右に A・B。メニューのボタンは下の列（ui.js が動かす） */
+/* 横持ち: 左の列に L・十字キー・SELECT・START、まん中にゲーム、右の列に R・A・B・早送り・メニュー。
+   どのボタンもゲームの画面に重ねない（下の列に置くと、ゲームのメッセージが読めなかった）。
+   メニューのボタンは ui.js が .mid に動かす */
 @media (orientation: landscape) and (max-height: 520px) {
+  :root { --side: clamp(112px, 18vw, 150px); --sl: max(6px, env(safe-area-inset-left)); --sr: max(6px, env(safe-area-inset-right)); }
   #panel { position: fixed; inset: 0; z-index: 30; }
-  .topbar { position: fixed; top: 0; right: 0; z-index: 5; padding: 4px 8px; }
-  .topbar h1 { display: none; }
-  .stage { position: fixed; inset: 0; align-items: center; background: transparent; pointer-events: none; }
-  #screen { width: auto; height: 100dvh; max-width: calc(100vw - 300px); }
-  .pad { position: fixed; inset: 0; grid-template-columns: 150px 1fr 150px; grid-template-rows: auto 1fr auto;
-    grid-template-areas: "l . r" "dpad . ab" "mid mid mid"; padding: 8px 10px; }
+  .topbar { display: none; }
+  .stage { position: fixed; inset: 0; align-items: center; background: transparent; pointer-events: none;
+    padding: 0 calc(var(--side) + var(--sr) + 8px) 0 calc(var(--side) + var(--sl) + 8px); }
+  #screen { width: min(100%, 150dvh); height: auto; max-width: none; }
+  .pad { position: fixed; inset: 0; grid-template-columns: var(--side) 1fr var(--side); grid-template-rows: auto 1fr auto auto;
+    grid-template-areas: "l . r" "dpad . ab" "sel . fast" "start . menu"; gap: 6px 0; padding: 6px var(--sr) 8px var(--sl); }
   .sh { width: 100% !important; }
-  .dpad, .ab { width: 140px; }
-  .mid { justify-content: space-between; padding: 0 160px; }
-  .mid #menuBtn { color: var(--ink); border-color: var(--pink); }
+  .dpad, .ab { width: min(140px, calc(var(--side) - 6px), calc(100dvh - 170px)); }
+  .dpad { justify-self: center; } .ab { justify-self: center; }
+  .mid { display: contents; }
+  .mid button { width: 100%; padding: 7px 0; }
+  .mid [data-key="select"] { grid-area: sel; } .mid [data-key="start"] { grid-area: start; }
+  .mid [data-fast] { grid-area: fast; } .mid #menuBtn { grid-area: menu; color: var(--ink); border-color: var(--pink); }
   .tabs .x { display: block; }      /* パネルが画面ぜんぶをおおうので、とじるボタンをここに出す */
 }
 </style>
