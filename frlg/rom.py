@@ -2,7 +2,7 @@
 import struct
 from dataclasses import dataclass
 
-from .text import decode_text
+from .text import decode_text, encode_text
 
 SUPPORTED = {"BPRJ": "ファイアレッド", "BPGJ": "リーフグリーン"}
 
@@ -14,6 +14,9 @@ BATTLE_MOVE_SIZE = 12
 NUM_SPECIES = 412   # 内部番号 0〜411
 NUM_MOVES = 355
 NUM_ABILITIES = 78
+ITEM_SIZE = 40      # 道具の表（日本版）: 名前 10バイト、+10 に道具の番号
+ITEM_NAME_LEN = 10
+NUM_ITEMS = 375
 TRAINER_SIZE = 32   # 日本版は名前が短いので 32バイト（海外版は 40）
 NUM_TRAINERS = 743
 TRAINER_BROCK = 414
@@ -33,6 +36,7 @@ class BaseStats:
     gender_ratio: int
     growth_rate: int
     abilities: tuple
+    items: tuple = (0, 0)   # 野生が持つ道具（よく持つ 50%, たまに持つ 5%）。2つ同じなら いつも
 
     @property
     def stats(self):
@@ -79,6 +83,10 @@ class Rom:
         self.evolutions_at = _find(
             d, struct.pack("<4H", 4, 16, 2, 0) + bytes(32) + struct.pack("<4H", 4, 32, 3, 0),
             "進化の表") - EVO_SIZE * EVOS_PER_SPECIES
+        master = _find(d, encode_text("マスターボール") + b"\xff", "道具の表")
+        if struct.unpack_from("<H", d, master + ITEM_NAME_LEN)[0] != 1:
+            raise UnsupportedRom("道具の表 が見つからない")
+        self.items_at = master - ITEM_SIZE
         self._dex = struct.unpack_from("<%dH" % (NUM_SPECIES - 1), d, self.dex_at)
         self._nat2int = {n: i + 1 for i, n in enumerate(self._dex) if 1 <= n <= 386}
 
@@ -103,6 +111,15 @@ class Rom:
         o = self.ability_names_at + a * ABILITY_NAME_LEN
         return decode_text(self.data[o:o + ABILITY_NAME_LEN])
 
+    def item_name(self, i: int):
+        """道具の名前。道具でない番号（0・表の外）は None"""
+        if not 0 < i < NUM_ITEMS:
+            return None
+        o = self.items_at + i * ITEM_SIZE
+        if struct.unpack_from("<H", self.data, o + ITEM_NAME_LEN)[0] != i:
+            return None
+        return decode_text(self.data[o:o + ITEM_NAME_LEN])
+
     def move_pp(self, m: int) -> int:
         return self.data[self.battle_moves_at + m * BATTLE_MOVE_SIZE + 4]
 
@@ -110,7 +127,7 @@ class Rom:
         o = self.base_stats_at + sp * BASE_STATS_SIZE
         b = self.data[o:o + BASE_STATS_SIZE]
         return BaseStats(b[0], b[1], b[2], b[3], b[4], b[5], (b[6], b[7]),
-                         b[16], b[19], (b[22], b[23]))
+                         b[16], b[19], (b[22], b[23]), struct.unpack_from("<2H", b, 12))
 
     def learnset(self, sp: int) -> list:
         ptr = struct.unpack_from("<I", self.data, self.learnset_ptrs_at + sp * 4)[0] - 0x08000000

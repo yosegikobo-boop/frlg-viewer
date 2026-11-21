@@ -218,11 +218,13 @@ label.pick input { display: none; }
       <label class="f">レベル（空なら元のまま）<input id="level" type="number" inputmode="numeric" min="1" max="100" placeholder="1〜100"></label>
       <label class="f">せいかく<select id="nature"><option value="">元のまま</option></select></label>
       <label class="f">せいべつ<select id="gender"><option value="">元のまま</option><option value="male">♂ オス</option><option value="female">♀ メス</option></select></label>
+      <label class="f">とくせい（野生と最初のポケモン）<select id="ability"><option value="">元のまま</option><option value="0">1つ目</option><option value="1">2つ目</option></select></label>
+      <label class="f">持ち物（野生。持たない種族もいます）<select id="item"><option value="">元のまま</option><option value="common">よく持つほう（50%）をかならず</option><option value="rare">たまに持つほう（5%）をかならず</option></select></label>
       <div class="checks"><label><input id="max_ivs" type="checkbox">個体値MAX</label><label><input id="shiny" type="checkbox">色違い</label></div>
       <label class="f">最初のポケモン（研究所でもらうとき）<input id="starter" type="text" list="splist" placeholder="空なら元のまま" autocomplete="off"></label>
     </div>
     <datalist id="splist"></datalist>
-    <p class="note">最初のポケモンにも、個体値MAX・色違い・せいかく・せいべつが使われます。</p>
+    <p class="note">最初のポケモンにも、個体値MAX・色違い・せいかく・せいべつ・とくせいが使われます。</p>
     <div class="sec-title">早送りの速さ</div>
     <div class="exp"><input id="speed_rate" type="range" min="1" max="4" step="0.25" value="2"><span id="speed_text" class="rate">2.0倍</span></div>
     <p class="note">下の「早送り」を押すと、この速さになります。もう一度押すと元の速さに戻ります。スマホによっては、速くしても追いつかないことがあります。</p>

@@ -30,7 +30,7 @@ export function cardHtml(c, enemy) {
   return `<div class="card${enemy ? " enemy" : ""}">
     <div class="top"><span class="nm">${esc(c.name || c.species_name)}</span>${sex}${nick}
       ${c.shiny ? '<span class="shiny">★色違い</span>' : ""}${cond}<span class="lv">Lv.${c.level}</span></div>
-    <div class="meta">${esc(c.nature_label)}<br>とくせい ${esc(c.ability)}</div>
+    <div class="meta">${esc(c.nature_label)}<br>とくせい ${esc(c.ability)}${c.item ? `<br>もちもの ${esc(c.item)}` : ""}</div>
     ${hpBar}<div class="bars">${bars}</div></div>`;
 }
 
@@ -61,13 +61,22 @@ function settingsTab(opts) {
     species: spNo(species, $("species").value), starter: spNo(species, $("starter").value),
     level: $("level").value ? Math.max(1, Math.min(100, +$("level").value)) : null,
     nature: $("nature").value === "" ? null : +$("nature").value, gender: $("gender").value || null,
+    ability: $("ability").value === "" ? null : +$("ability").value, item: $("item").value || null,
     max_ivs: $("max_ivs").checked, shiny: $("shiny").checked, rematch: $("rematch").checked,
     exp_rate: +$("exp_rate").value,
   }, patch || {});
   const save = (patch) => { if (settings && opts.onSettings) opts.onSettings(collect(patch)); };
+  // 「ポケモン」の欄の種族のとくせいの名前を、とくせいの選ぶ欄に出す
+  const abilityLabels = () => {
+    const no = spNo(species, $("species").value), sp = no ? species[no - 1] : null;
+    const a = sp && sp.abilities, o = $("ability").options;
+    o[1].text = "1つ目" + (a ? `（${a[0]}）` : "");
+    o[2].text = "2つ目" + (a ? `（${a[1] || "なし"}）` : "");
+  };
+  $("species").addEventListener("input", abilityLabels);
 
   $("toggle").onclick = () => save({ enabled: !settings.enabled });
-  for (const id of ["species", "starter", "level", "nature", "gender", "max_ivs", "shiny", "rematch"]) {
+  for (const id of ["species", "starter", "level", "nature", "gender", "ability", "item", "max_ivs", "shiny", "rematch"]) {
     $(id).addEventListener("change", () => save());
   }
   $("exp_rate").addEventListener("input", () => { dragging = true; showRate($("exp_rate").value); });
@@ -91,6 +100,9 @@ function settingsTab(opts) {
       if (document.activeElement !== $("level")) $("level").value = s.level || "";
       $("nature").value = s.nature === null ? "" : String(s.nature);
       $("gender").value = s.gender || "";
+      $("ability").value = s.ability === null || s.ability === undefined ? "" : String(s.ability);
+      $("item").value = s.item || "";
+      abilityLabels();
       $("max_ivs").checked = s.max_ivs;
       $("shiny").checked = s.shiny;
       $("rematch").checked = s.rematch;

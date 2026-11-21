@@ -79,10 +79,12 @@ def can_choose_gender(ratio: int) -> bool:
     return ratio not in (0, 254, 255)
 
 
-def find_pid(otid, want_shiny: bool, want_nature, rng, want_gender=None, gender_ratio=255) -> int:
+def find_pid(otid, want_shiny: bool, want_nature, rng, want_gender=None, gender_ratio=255,
+             want_ability=None) -> int:
     """色違いかどうか・性格（pid % 25）・性別に合う個性値をさがす。
     色違いは下の16ビットから上の16ビットを逆算して作れる。
     性別は、オスかメスのどちらにもなれる種族のときだけ合わせる。
+    とくせい（0・1）は pid & 1（第3世代の決まり方）。
     見つからなければ色違いを優先して性格・性別をあきらめる（実際には起きない）"""
     if not can_choose_gender(gender_ratio):
         want_gender = None
@@ -101,6 +103,8 @@ def find_pid(otid, want_shiny: bool, want_nature, rng, want_gender=None, gender_
         if want_nature is not None and pid % 25 != want_nature:
             continue
         if want_gender is not None and gender_of(pid, gender_ratio) != want_gender:
+            continue
+        if want_ability is not None and pid & 1 != want_ability:
             continue
         return pid
     return last

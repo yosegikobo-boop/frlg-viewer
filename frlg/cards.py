@@ -45,7 +45,19 @@ def card(p, rom, party: bool):
         "hp": hp,
         "max_hp": stats[0],
         "status": status,
+        "item": rom.item_name(p.item) if p.item else None,
     }
+
+
+def species_choices(rom):
+    """設定の画面の種族の一覧（全国図鑑の順）。abilities はとくせいの名前（2つ目が無ければ None）"""
+    out = []
+    for n in range(1, 387):
+        sp = rom.national_to_internal(n)
+        a = rom.base_stats(sp).abilities
+        out.append({"no": n, "name": rom.species_name(sp),
+                    "abilities": [rom.ability_name(a[0]), rom.ability_name(a[1]) if a[1] else None]})
+    return out
 
 
 def party_cards(data: bytes, rom, count: int = 6):

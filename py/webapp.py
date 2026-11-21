@@ -9,6 +9,7 @@ import json
 import random
 
 from frlg.calc import nature_label
+from frlg.cards import species_choices
 from frlg.core import Core
 from frlg.rematch import Wins
 from frlg.replace import Settings, settings_from_json
@@ -51,7 +52,7 @@ def boot(rom, settings_json: str, wins_json: str, save_wins=None) -> str:
     _core = Core(s, Wins(data=_loads(wins_json, dict), on_change=on_change), random.Random())
     return json.dumps({
         "ok": True, "code": _code, "game": r.game_name, "settings": s.to_json(),
-        "species": [{"no": n, "name": r.species_name(r.national_to_internal(n))} for n in range(1, 387)],
+        "species": species_choices(r),
         "natures": [{"id": i, "label": nature_label(i)} for i in range(25)],
         "exp_ok": _core.exp_hook(r) is not None,
     }, ensure_ascii=False)
