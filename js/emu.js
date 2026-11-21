@@ -200,10 +200,14 @@ export async function createEmu(canvas, opts = {}) {
     async importSave(bytes, code) {
       code = code || emu.code;
       if (!code) throw new Error("先に ROM を選んでください");
+      // 遊んでいるゲームは先に閉じる。閉じるときに mGBA が今のセーブをファイルに書き戻すので、
+      // 書いたあとに閉じると、取り込んだセーブが前のセーブで上書きされる
+      const reopen = running && code === emu.code;
+      if (reopen) { Module.quitGame(); running = false; emu.mem = null; }
       Module.FS.writeFile(SAVES + code + ".sav", bytes);
       emu.clearAutoState(code);       // 前のセーブの「続きから」は使わない
       await sync();
-      if (running && code === emu.code) await emu.start(null, code);
+      if (reopen) await emu.start(null, code);
     },
     saveState(slot) { const ok = running && Module.saveState(slot); sync(); return !!ok; },
     loadState(slot) { return !!(running && Module.loadState(slot)); },
